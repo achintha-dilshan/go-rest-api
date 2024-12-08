@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/achintha-dilshan/go-rest-api/cmd/internal/config"
 	"github.com/achintha-dilshan/go-rest-api/cmd/internal/database"
 	"github.com/achintha-dilshan/go-rest-api/cmd/internal/routes"
 )
@@ -20,11 +22,13 @@ func main() {
 		}
 	}()
 
+	fmt.Println(config.Env.DBName)
+
 	// init router
 	router := routes.Init()
 
 	// init server
-	port := ":8000"
+	port := ":" + config.Env.ServerPort
 	server := &http.Server{
 		Addr:    port,
 		Handler: router,

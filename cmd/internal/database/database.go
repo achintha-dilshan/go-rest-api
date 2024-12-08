@@ -5,7 +5,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/achintha-dilshan/go-rest-api/cmd/internal/utils"
+	"github.com/achintha-dilshan/go-rest-api/cmd/internal/config"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -16,16 +16,16 @@ var (
 
 func Init() {
 	once.Do(func() {
-		config := mysql.Config{
-			Addr:   utils.GetEnv("DB_HOST", "localhost") + ":3306",
-			DBName: utils.GetEnv("DB_NAME", "go_rest_api"),
-			User:   utils.GetEnv("DB_USER", "root"),
-			Passwd: utils.GetEnv("DB_PASSWORD", ""),
+		dbConfig := mysql.Config{
+			Addr:   config.Env.DBHost + ":" + config.Env.DBPort,
+			DBName: config.Env.DBName,
+			User:   config.Env.DBUser,
+			Passwd: config.Env.DBPassword,
 		}
 
 		// open the database connection
 		var err error
-		DB, err = sql.Open("mysql", config.FormatDSN())
+		DB, err = sql.Open("mysql", dbConfig.FormatDSN())
 		if err != nil {
 			log.Fatalf("Failed to connect to the database: %v", err)
 		}
