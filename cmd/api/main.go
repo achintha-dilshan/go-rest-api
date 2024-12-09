@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/achintha-dilshan/go-rest-api/cmd/internal/config"
-	"github.com/achintha-dilshan/go-rest-api/cmd/internal/database"
-	"github.com/achintha-dilshan/go-rest-api/cmd/internal/routes"
+	"github.com/achintha-dilshan/go-rest-api/config"
+	"github.com/achintha-dilshan/go-rest-api/database"
+	"github.com/achintha-dilshan/go-rest-api/internal/routes"
 )
 
 func main() {
@@ -21,8 +20,6 @@ func main() {
 			log.Println("Database connection closed")
 		}
 	}()
-
-	fmt.Println(config.Env.DBName)
 
 	// init router
 	router := routes.Init()

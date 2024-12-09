@@ -5,7 +5,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/achintha-dilshan/go-rest-api/cmd/internal/config"
+	"github.com/achintha-dilshan/go-rest-api/config"
 	"github.com/go-sql-driver/mysql"
 )
 

@@ -10,7 +10,7 @@ func Init() *chi.Mux {
 	router.Use(middleware.Logger)
 
 	// Auth Routes
-	RegisterAuthRoutes(router)
+	router.Mount("/auth", AuthRoutes())
 
 	return router
 }
