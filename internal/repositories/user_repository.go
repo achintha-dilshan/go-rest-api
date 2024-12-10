@@ -7,6 +7,10 @@ import (
 	"github.com/achintha-dilshan/go-rest-api/internal/models"
 )
 
+type userRepository struct {
+	db *sql.DB
+}
+
 type UserRepository interface {
 	Create(ctx context.Context, user *models.User) (int64, error)
 	GetById(ctx context.Context, id int64) (*models.User, error)
@@ -16,10 +20,6 @@ type UserRepository interface {
 	GetByEmail(ctx context.Context, email string) (*models.User, error)
 }
 
-type userRepository struct {
-	db *sql.DB
-}
-
 func NewUserRepository(db *sql.DB) UserRepository {
 	return &userRepository{db: db}
 }
@@ -27,7 +27,7 @@ func NewUserRepository(db *sql.DB) UserRepository {
 // create a new user
 func (r *userRepository) Create(ctx context.Context, user *models.User) (int64, error) {
 	query := "INSERT INTO users (name, email, password, created_at, updated_at) VALUES (?, ?, ?, NOW(), NULL)"
-	result, err := r.db.Exec(query, user.Name, user.Email, user.Password)
+	result, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Password)
 
 	if err != nil {
 		return 0, err
@@ -41,7 +41,7 @@ func (r *userRepository) Create(ctx context.Context, user *models.User) (int64, 
 func (r *userRepository) GetById(ctx context.Context, id int64) (*models.User, error) {
 	var user models.User
 	query := "SELECT id, name, email FROM users WHERE id = ?"
-	err := r.db.QueryRow(query, id).Scan(
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&user.Id, &user.Name, &user.Email,
 	)
 
@@ -55,7 +55,7 @@ func (r *userRepository) GetById(ctx context.Context, id int64) (*models.User, e
 // update user
 func (r *userRepository) Update(ctx context.Context, user *models.User) error {
 	query := "UPDATE users SET name = ?, email = ? WHERE id = ?"
-	_, err := r.db.Exec(query, user.Name, user.Email, user.Id)
+	_, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Id)
 
 	return err
 }
@@ -63,7 +63,7 @@ func (r *userRepository) Update(ctx context.Context, user *models.User) error {
 // delete user
 func (r *userRepository) Delete(ctx context.Context, id int64) error {
 	query := "DELETE FROM users WHERE id = ?"
-	_, err := r.db.Exec(query, id)
+	_, err := r.db.ExecContext(ctx, query, id)
 
 	return err
 }
@@ -72,7 +72,7 @@ func (r *userRepository) Delete(ctx context.Context, id int64) error {
 func (r *userRepository) ExistByEmail(ctx context.Context, email string) (bool, error) {
 	var exists bool
 	query := "SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)"
-	err := r.db.QueryRow(query, email).Scan(&exists)
+	err := r.db.QueryRowContext(ctx, query, email).Scan(&exists)
 
 	if err != nil {
 		return false, err
@@ -85,7 +85,7 @@ func (r *userRepository) ExistByEmail(ctx context.Context, email string) (bool, 
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
 	query := "SELECT id, name, email FROM users WHERE email = ?"
-	err := r.db.QueryRow(query, email).Scan(
+	err := r.db.QueryRowContext(ctx, query, email).Scan(
 		&user.Id, &user.Name, &user.Email,
 	)
 
