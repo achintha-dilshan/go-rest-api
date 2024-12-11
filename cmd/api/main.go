@@ -12,14 +12,7 @@ import (
 func main() {
 	// init database
 	database.Init()
-
-	defer func() {
-		if err := database.DB.Close(); err != nil {
-			log.Printf("Failed to close the database: %v", err)
-		} else {
-			log.Println("Database connection closed")
-		}
-	}()
+	defer database.Close()
 
 	// init router
 	router := routes.Init()
