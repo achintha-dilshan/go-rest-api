@@ -56,20 +56,20 @@ func (h *authHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	// decode request body
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON payload. Please check your input."})
 		return
 	}
 
 	// validate user inputs
 	if err := req.Validate(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.HandleValidationErrors(w, err)
 		return
 	}
 
 	// hash the password
 	hashedPassword, err := hashPassword(req.Password)
 	if err != nil {
-		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to hash password. Please try again later."})
 		return
 	}
 	req.Password = hashedPassword
@@ -77,7 +77,7 @@ func (h *authHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	// create a new user
 	userId, err := h.service.CreateUser(r.Context(), &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusConflict)
+		utils.RespondWithJSON(w, http.StatusConflict, map[string]string{"error": "A user with this email already exists. Please use a different email."})
 		return
 	}
 
@@ -86,6 +86,10 @@ func (h *authHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		"user_id": userId,
 		"message": "User registered successfully",
 	})
+}
+
+type ValidationErrorResponse struct {
+	Errors map[string]string `json:"errors"`
 }
 
 // login user
@@ -97,26 +101,26 @@ func (h *authHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	// decode request body
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON payload. Please check your input."})
 		return
 	}
 
 	// validate input
 	if err := h.validator.Struct(req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		utils.HandleValidationErrors(w, err)
 		return
 	}
 
 	// retrieve user by email
 	user, err := h.service.GetUserByEmail(r.Context(), req.Email)
 	if err != nil {
-		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		utils.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"error": "Email or password is incorrect. Please try again."})
 		return
 	}
 
 	// compare passwords
 	if err := comparePasswords(user.Password, req.Password); err != nil {
-		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		utils.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"error": "Email or password is incorrect. Please try again."})
 		return
 	}
 
