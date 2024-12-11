@@ -4,21 +4,32 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/achintha-dilshan/go-rest-api/database"
 	"github.com/achintha-dilshan/go-rest-api/internal/models"
+	"github.com/achintha-dilshan/go-rest-api/internal/repositories"
 	"github.com/achintha-dilshan/go-rest-api/internal/services"
 	"github.com/achintha-dilshan/go-rest-api/internal/utils"
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthHandler struct {
+type authHandler struct {
 	service   services.UserService
 	validator *validator.Validate
 }
 
-func NewAuthHandler(service services.UserService, validator *validator.Validate) AuthHandler {
-	return AuthHandler{
-		service:   service,
+type AuthHandler interface {
+	RegisterUser(w http.ResponseWriter, r *http.Request)
+	LoginUser(w http.ResponseWriter, r *http.Request)
+}
+
+func NewAuthHandler() AuthHandler {
+	userRepository := repositories.NewUserRepository(database.DB)
+	userService := services.NewUserService(userRepository)
+	validator := validator.New()
+
+	return &authHandler{
+		service:   userService,
 		validator: validator,
 	}
 }
@@ -35,12 +46,12 @@ func hashPassword(password string) (string, error) {
 }
 
 // compare passwords
-func comparePasswords(hashedPassword, password string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) == nil
+func comparePasswords(hashedPassword, password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
 // register user
-func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
+func (h *authHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var req models.User
 
 	// decode request body
@@ -71,17 +82,14 @@ func (h *AuthHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send success response
-	response := map[string]interface{}{
+	utils.RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
 		"user_id": userId,
 		"message": "User registered successfully",
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
 // login user
-func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
+func (h *authHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email    string `json:"email" validate:"required,email"`
 		Password string `json:"password" validate:"required,min=3"`
@@ -107,7 +115,7 @@ func (h *AuthHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// compare passwords
-	if !comparePasswords(user.Password, req.Password) {
+	if err := comparePasswords(user.Password, req.Password); err != nil {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
