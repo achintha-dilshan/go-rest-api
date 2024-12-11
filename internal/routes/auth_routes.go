@@ -10,7 +10,7 @@ import (
 func AuthRoutes() http.Handler {
 	r := chi.NewRouter()
 
-	var authHandler *handlers.AuthHandler
+	authHandler := handlers.NewAuthHandler()
 
 	r.Post("/login", authHandler.LoginUser)
 	r.Post("/register", authHandler.RegisterUser)
