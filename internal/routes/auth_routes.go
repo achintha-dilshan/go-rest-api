@@ -8,9 +8,12 @@ import (
 )
 
 func AuthRoutes() http.Handler {
-	router := chi.NewRouter()
-	router.Get("/login", handlers.LoginHandler)
-	router.Get("/register", handlers.RegisterHandler)
+	r := chi.NewRouter()
 
-	return router
+	var authHandler *handlers.AuthHandler
+
+	r.Post("/login", authHandler.LoginUser)
+	r.Post("/register", authHandler.RegisterUser)
+
+	return r
 }
