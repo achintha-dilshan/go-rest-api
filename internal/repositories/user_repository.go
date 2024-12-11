@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/achintha-dilshan/go-rest-api/internal/models"
 )
@@ -12,12 +13,12 @@ type userRepository struct {
 }
 
 type UserRepository interface {
-	Create(ctx context.Context, user *models.User) (int64, error)
-	GetById(ctx context.Context, id int64) (*models.User, error)
-	Update(ctx context.Context, user *models.User) error
-	Delete(ctx context.Context, id int64) error
-	ExistByEmail(ctx context.Context, email string) (bool, error)
-	GetByEmail(ctx context.Context, email string) (*models.User, error)
+	CreateUser(ctx context.Context, user *models.User) (int64, error)
+	GetUserById(ctx context.Context, id int64) (*models.User, error)
+	UpdateUser(ctx context.Context, user *models.User) error
+	DeleteUser(ctx context.Context, id int64) error
+	ExistUserByEmail(ctx context.Context, email string) (bool, error)
+	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
 }
 
 func NewUserRepository(db *sql.DB) UserRepository {
@@ -25,20 +26,24 @@ func NewUserRepository(db *sql.DB) UserRepository {
 }
 
 // create a new user
-func (r *userRepository) Create(ctx context.Context, user *models.User) (int64, error) {
+func (r *userRepository) CreateUser(ctx context.Context, user *models.User) (int64, error) {
 	query := "INSERT INTO users (name, email, password, created_at, updated_at) VALUES (?, ?, ?, NOW(), NULL)"
 	result, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Password)
 
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("error creating user: %w", err)
 	}
 
-	id, _ := result.LastInsertId()
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("error getting last insert ID: %w", err)
+	}
+
 	return id, nil
 }
 
 // get user by id
-func (r *userRepository) GetById(ctx context.Context, id int64) (*models.User, error) {
+func (r *userRepository) GetUserById(ctx context.Context, id int64) (*models.User, error) {
 	var user models.User
 	query := "SELECT id, name, email FROM users WHERE id = ?"
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
@@ -46,43 +51,54 @@ func (r *userRepository) GetById(ctx context.Context, id int64) (*models.User, e
 	)
 
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, nil // No user found
+		}
+		return nil, fmt.Errorf("error getting user by ID: %w", err)
 	}
 
 	return &user, nil
 }
 
 // update user
-func (r *userRepository) Update(ctx context.Context, user *models.User) error {
+func (r *userRepository) UpdateUser(ctx context.Context, user *models.User) error {
 	query := "UPDATE users SET name = ?, email = ? WHERE id = ?"
 	_, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Id)
 
-	return err
+	if err != nil {
+		return fmt.Errorf("error updating user: %w", err)
+	}
+
+	return nil
 }
 
 // delete user
-func (r *userRepository) Delete(ctx context.Context, id int64) error {
+func (r *userRepository) DeleteUser(ctx context.Context, id int64) error {
 	query := "DELETE FROM users WHERE id = ?"
 	_, err := r.db.ExecContext(ctx, query, id)
 
-	return err
+	if err != nil {
+		return fmt.Errorf("error deleting user: %w", err)
+	}
+
+	return nil
 }
 
 // check if the user already exists by email
-func (r *userRepository) ExistByEmail(ctx context.Context, email string) (bool, error) {
+func (r *userRepository) ExistUserByEmail(ctx context.Context, email string) (bool, error) {
 	var exists bool
 	query := "SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)"
 	err := r.db.QueryRowContext(ctx, query, email).Scan(&exists)
 
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("error checking if user exists by email: %w", err)
 	}
 
 	return exists, nil
 }
 
 // get user by email
-func (r *userRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
+func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
 	query := "SELECT id, name, email FROM users WHERE email = ?"
 	err := r.db.QueryRowContext(ctx, query, email).Scan(
@@ -90,7 +106,10 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*models.
 	)
 
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, nil // No user found
+		}
+		return nil, fmt.Errorf("error getting user by email: %w", err)
 	}
 
 	return &user, nil
