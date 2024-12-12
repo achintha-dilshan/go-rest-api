@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/achintha-dilshan/go-rest-api/config"
 	"github.com/achintha-dilshan/go-rest-api/database"
@@ -13,6 +14,17 @@ func main() {
 	// init database
 	database.Init()
 	defer database.Close()
+
+	// run migrations
+	if len(os.Args) > 1 {
+
+		// Path to your migration files
+		migrationPath := "./database/migrations"
+
+		// Run the migration
+		database.RunMigration(database.DB, migrationPath)
+		return
+	}
 
 	// init router
 	router := routes.Init()
