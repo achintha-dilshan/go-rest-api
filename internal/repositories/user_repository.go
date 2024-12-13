@@ -12,6 +12,10 @@ type userRepository struct {
 	db *sql.DB
 }
 
+func NewUserRepository(db *sql.DB) UserRepository {
+	return &userRepository{db: db}
+}
+
 type UserRepository interface {
 	CreateUser(ctx context.Context, user *models.User) (int64, error)
 	GetUserById(ctx context.Context, id int64) (*models.User, error)
@@ -21,13 +25,9 @@ type UserRepository interface {
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
 }
 
-func NewUserRepository(db *sql.DB) UserRepository {
-	return &userRepository{db: db}
-}
-
 // create a new user
 func (r *userRepository) CreateUser(ctx context.Context, user *models.User) (int64, error) {
-	query := "INSERT INTO users (name, email, password, created_at, updated_at) VALUES (?, ?, ?, NOW(), NULL)"
+	query := "INSERT INTO users (name, email, password, created_at) VALUES (?, ?, ?, NOW())"
 	result, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Password)
 
 	if err != nil {
@@ -86,7 +86,7 @@ func (r *userRepository) DeleteUser(ctx context.Context, id int64) error {
 
 // check if the user already exists by email
 func (r *userRepository) ExistUserByEmail(ctx context.Context, email string) (bool, error) {
-	var exists bool
+	var exists int
 	query := "SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)"
 	err := r.db.QueryRowContext(ctx, query, email).Scan(&exists)
 
@@ -94,7 +94,7 @@ func (r *userRepository) ExistUserByEmail(ctx context.Context, email string) (bo
 		return false, fmt.Errorf("error checking if user exists by email: %w", err)
 	}
 
-	return exists, nil
+	return exists == 1, nil
 }
 
 // get user by email
