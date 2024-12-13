@@ -12,16 +12,16 @@ type userService struct {
 	repository repositories.UserRepository
 }
 
+func NewUserService(repository repositories.UserRepository) UserService {
+	return &userService{repository: repository}
+}
+
 type UserService interface {
 	CreateUser(ctx context.Context, user *models.User) (int64, error)
 	GetUserById(ctx context.Context, id int64) (*models.User, error)
 	UpdateUser(ctx context.Context, user *models.User) error
 	DeleteUser(ctx context.Context, id int64) error
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
-}
-
-func NewUserService(repository repositories.UserRepository) UserService {
-	return &userService{repository: repository}
 }
 
 // create a new user
