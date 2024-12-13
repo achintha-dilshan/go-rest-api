@@ -12,10 +12,6 @@ type userRepository struct {
 	db *sql.DB
 }
 
-func NewUserRepository(db *sql.DB) UserRepository {
-	return &userRepository{db: db}
-}
-
 type UserRepository interface {
 	CreateUser(ctx context.Context, user *models.User) (int64, error)
 	GetUserById(ctx context.Context, id int64) (*models.User, error)
@@ -23,6 +19,10 @@ type UserRepository interface {
 	DeleteUser(ctx context.Context, id int64) error
 	ExistUserByEmail(ctx context.Context, email string) (bool, error)
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+}
+
+func NewUserRepository(db *sql.DB) UserRepository {
+	return &userRepository{db: db}
 }
 
 // create a new user

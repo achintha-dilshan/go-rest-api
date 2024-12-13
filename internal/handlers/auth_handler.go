@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/achintha-dilshan/go-rest-api/database"
 	"github.com/achintha-dilshan/go-rest-api/internal/models"
-	"github.com/achintha-dilshan/go-rest-api/internal/repositories"
 	"github.com/achintha-dilshan/go-rest-api/internal/services"
 	"github.com/achintha-dilshan/go-rest-api/internal/utils"
 	"github.com/go-playground/validator/v10"
@@ -23,13 +21,10 @@ type AuthHandler interface {
 	LoginUser(w http.ResponseWriter, r *http.Request)
 }
 
-func NewAuthHandler() AuthHandler {
-	userRepository := repositories.NewUserRepository(database.DB)
-	userService := services.NewUserService(userRepository)
+func NewAuthHandler(service services.UserService) AuthHandler {
 	validator := validator.New()
-
 	return &authHandler{
-		service:   userService,
+		service:   service,
 		validator: validator,
 	}
 }

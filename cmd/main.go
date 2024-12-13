@@ -2,44 +2,30 @@ package main
 
 import (
 	"log"
-	"net/http"
-	"os"
 
+	"github.com/achintha-dilshan/go-rest-api/cmd/api"
 	"github.com/achintha-dilshan/go-rest-api/config"
-	"github.com/achintha-dilshan/go-rest-api/database"
-	"github.com/achintha-dilshan/go-rest-api/internal/routes"
 )
 
 func main() {
 	// init database
-	database.Init()
-	defer database.Close()
-
-	// run migrations
-	if len(os.Args) > 1 {
-
-		// Path to your migration files
-		migrationPath := "./database/migrations"
-
-		// Run the migration
-		database.RunMigration(database.DB, migrationPath)
-		return
+	db := api.NewDatabase()
+	if err := db.Connect(); err != nil {
+		log.Fatalf("Database connection failed: %v", err)
 	}
+	defer db.Close()
 
-	// init router
-	router := routes.Init()
+	// Get the database instance
+	sqlDB, err := db.GetDB()
+	if err != nil {
+		log.Fatalf("Error retrieving database instance: %v", err)
+	}
 
 	// init server
 	port := ":" + config.Env.ServerPort
-	server := &http.Server{
-		Addr:    port,
-		Handler: router,
-	}
+	server := api.NewAPIServer(port, sqlDB)
 
-	log.Printf("Server is running on port %v", port)
-
-	err := server.ListenAndServe()
-	if err != nil {
+	if err := server.Run(); err != nil {
 		log.Fatalf("Failed to start the server: %v", err)
 	}
 }
