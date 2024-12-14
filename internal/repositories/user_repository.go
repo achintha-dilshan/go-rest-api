@@ -27,7 +27,7 @@ func NewUserRepository(db *sql.DB) UserRepository {
 
 // create a new user
 func (r *userRepository) CreateUser(ctx context.Context, user *models.User) (int64, error) {
-	query := "INSERT INTO users (name, email, password, created_at) VALUES (?, ?, ?, NOW())"
+	query := "INSERT INTO users (name, email, password) VALUES (?, ?, ?)"
 	result, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Password)
 
 	if err != nil {
