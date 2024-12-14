@@ -5,11 +5,12 @@ import (
 
 	"github.com/achintha-dilshan/go-rest-api/cmd/api"
 	"github.com/achintha-dilshan/go-rest-api/config"
+	"github.com/achintha-dilshan/go-rest-api/database"
 )
 
 func main() {
 	// init database
-	db := api.NewDatabase()
+	db := database.NewDatabase()
 	if err := db.Connect(); err != nil {
 		log.Fatalf("Database connection failed: %v", err)
 	}
