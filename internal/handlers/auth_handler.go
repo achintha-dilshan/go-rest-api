@@ -7,6 +7,7 @@ import (
 	"github.com/achintha-dilshan/go-rest-api/internal/models"
 	"github.com/achintha-dilshan/go-rest-api/internal/services"
 	"github.com/achintha-dilshan/go-rest-api/internal/utils"
+	"github.com/achintha-dilshan/go-rest-api/pkg/res"
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -29,62 +30,82 @@ func NewAuthHandler(service services.UserService) AuthHandler {
 	}
 }
 
-// hash password
-func hashPassword(password string) (string, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-
-	if err != nil {
-		return "", err
-	}
-
-	return string(hashedPassword), nil
-}
-
-// compare passwords
-func comparePasswords(hashedPassword, password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-}
-
 // register user
 func (h *authHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
-	var req models.User
+	var req struct {
+		Name     string `json:"name" validate:"required,min=3"`
+		Email    string `json:"email" validate:"required,email"`
+		Password string `json:"password" validate:"required,min=3"`
+	}
 
 	// decode request body
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON payload. Please check your input."})
+		res.JSON(w, http.StatusBadRequest, map[string]interface{}{
+			"error":   "Invalid JSON payload.",
+			"message": "Invalid JSON payload.",
+		})
 		return
 	}
 
 	// validate user inputs
-	if err := req.Validate(); err != nil {
+	if err := h.validator.Struct(req); err != nil {
 		utils.HandleValidationErrors(w, err)
 		return
 	}
 
-	// hash the password
-	hashedPassword, err := hashPassword(req.Password)
+	// check if the email is already exist
+	emailExist, err := h.service.ExistUserByEmail(r.Context(), req.Email)
 	if err != nil {
-		utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to hash password. Please try again later."})
+		res.JSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"error":   "Internal server error.",
+			"message": "Internal server error.",
+		})
 		return
 	}
-	req.Password = hashedPassword
+
+	if emailExist {
+		res.JSON(w, http.StatusConflict, map[string]interface{}{
+			"error": map[string]interface{}{
+				"email": "Email already exist.",
+			},
+			"message": "Email already exist.",
+		})
+		return
+	}
+
+	// hash the password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		res.JSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"error":   "Internal server error.",
+			"message": "Internal server error.",
+		})
+		return
+	}
+	req.Password = string(hashedPassword)
 
 	// create a new user
-	userId, err := h.service.CreateUser(r.Context(), &req)
+	newUser := models.User{
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: req.Password,
+	}
+	userId, err := h.service.CreateUser(r.Context(), &newUser)
 	if err != nil {
-		utils.RespondWithJSON(w, http.StatusConflict, map[string]string{"error": "A user with this email already exists. Please use a different email."})
+		res.JSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"error":   "Internal server error.",
+			"message": "Internal server error.",
+		})
 		return
 	}
 
 	// send success response
-	utils.RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
-		"user_id": userId,
-		"message": "User registered successfully",
+	res.JSON(w, http.StatusCreated, map[string]interface{}{
+		"id":      userId,
+		"name":    req.Name,
+		"email":   req.Email,
+		"message": "User registered successfully.",
 	})
-}
-
-type ValidationErrorResponse struct {
-	Errors map[string]string `json:"errors"`
 }
 
 // login user
@@ -96,7 +117,10 @@ func (h *authHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	// decode request body
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON payload. Please check your input."})
+		res.JSON(w, http.StatusBadRequest, map[string]interface{}{
+			"error":   "Invalid JSON payload.",
+			"message": "Invalid JSON payload.",
+		})
 		return
 	}
 
@@ -109,13 +133,27 @@ func (h *authHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	// retrieve user by email
 	user, err := h.service.GetUserByEmail(r.Context(), req.Email)
 	if err != nil {
-		utils.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"error": "Email or password is incorrect. Please try again."})
+		res.JSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"error":   "Internal server error.",
+			"message": "Internal server error.",
+		})
+		return
+	}
+
+	if user == nil {
+		res.JSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"error":   "Email or password is incorrect.",
+			"message": "Email or password is incorrect.",
+		})
 		return
 	}
 
 	// compare passwords
-	if err := comparePasswords(user.Password, req.Password); err != nil {
-		utils.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"error": "Email or password is incorrect. Please try again."})
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		res.JSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"error":   "Email or password is incorrect.",
+			"message": "Email or password is incorrect.",
+		})
 		return
 	}
 
@@ -123,8 +161,8 @@ func (h *authHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	token := "mocked_token"
 
 	// send success response
-	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
+	res.JSON(w, http.StatusOK, map[string]interface{}{
 		"token":   token,
-		"message": "Login successful",
+		"message": "Login successful.",
 	})
 }
