@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 
 	"github.com/achintha-dilshan/go-rest-api/internal/models"
 )
@@ -25,24 +26,26 @@ func NewUserRepository(db *sql.DB) UserRepository {
 	return &userRepository{db: db}
 }
 
-// create a new user
+// CreateUser inserts a new user into the database
 func (r *userRepository) CreateUser(ctx context.Context, user *models.User) (int64, error) {
 	query := "INSERT INTO users (name, email, password) VALUES (?, ?, ?)"
 	result, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Password)
 
 	if err != nil {
+		log.Printf("Error creating user: %v", err)
 		return 0, err
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
+		log.Printf("Error retrieving last insert ID: %v", err)
 		return 0, err
 	}
 
 	return id, nil
 }
 
-// get user by id
+// GetUserById retrieves a user by ID
 func (r *userRepository) GetUserById(ctx context.Context, id int64) (*models.User, error) {
 	var user models.User
 	query := "SELECT id, name, email FROM users WHERE id = ?"
@@ -55,50 +58,54 @@ func (r *userRepository) GetUserById(ctx context.Context, id int64) (*models.Use
 			return nil, nil
 		}
 
+		log.Printf("Error retrieving user by ID: %v", err)
 		return nil, err
 	}
 
 	return &user, nil
 }
 
-// update user
+// UpdateUser updates a user's details in the database
 func (r *userRepository) UpdateUser(ctx context.Context, user *models.User) error {
 	query := "UPDATE users SET name = ?, email = ? WHERE id = ?"
 	_, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Id)
 
 	if err != nil {
+		log.Printf("Error updating user: %v", err)
 		return err
 	}
 
 	return nil
 }
 
-// delete user
+// DeleteUser removes a user from the database
 func (r *userRepository) DeleteUser(ctx context.Context, id int64) error {
 	query := "DELETE FROM users WHERE id = ?"
 	_, err := r.db.ExecContext(ctx, query, id)
 
 	if err != nil {
+		log.Printf("Error deleting user: %v", err)
 		return err
 	}
 
 	return nil
 }
 
-// check if the user already exists by email
+// ExistUserByEmail checks if a user exists by email
 func (r *userRepository) ExistUserByEmail(ctx context.Context, email string) (bool, error) {
 	var exists int
 	query := "SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)"
 	err := r.db.QueryRowContext(ctx, query, email).Scan(&exists)
 
 	if err != nil {
+		log.Printf("Error checking if user exists: %v", err)
 		return false, err
 	}
 
 	return exists == 1, nil
 }
 
-// get user by email
+// GetUserByEmail retrieves a user by email
 func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
 	query := "SELECT id, name, email, password FROM users WHERE email = ?"
@@ -111,6 +118,7 @@ func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 			return nil, nil
 		}
 
+		log.Printf("Error retrieving user by email: %v", err)
 		return nil, err
 	}
 
