@@ -6,15 +6,13 @@ import (
 
 	"github.com/achintha-dilshan/go-rest-api/internal/models"
 	"github.com/achintha-dilshan/go-rest-api/internal/services"
-	"github.com/achintha-dilshan/go-rest-api/internal/utils"
-	"github.com/achintha-dilshan/go-rest-api/pkg/res"
-	"github.com/go-playground/validator/v10"
+	"github.com/achintha-dilshan/go-rest-api/internal/utils/res"
+	"github.com/achintha-dilshan/go-rest-api/internal/utils/validator"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type authHandler struct {
-	service   services.UserService
-	validator *validator.Validate
+	service services.UserService
 }
 
 type AuthHandler interface {
@@ -23,10 +21,8 @@ type AuthHandler interface {
 }
 
 func NewAuthHandler(service services.UserService) AuthHandler {
-	validator := validator.New()
 	return &authHandler{
-		service:   service,
-		validator: validator,
+		service: service,
 	}
 }
 
@@ -48,8 +44,9 @@ func (h *authHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate user inputs
-	if err := h.validator.Struct(req); err != nil {
-		utils.HandleValidationErrors(w, err)
+	validator := validator.New()
+	if err := validator.Validate(req); err != nil {
+		res.JSON(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -111,7 +108,7 @@ func (h *authHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 // login user
 func (h *authHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Email    string `json:"email" validate:"required,email"`
+		Email    string `json:"email" validate:"email,required"`
 		Password string `json:"password" validate:"required,min=3"`
 	}
 
@@ -124,9 +121,10 @@ func (h *authHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// validate input
-	if err := h.validator.Struct(req); err != nil {
-		utils.HandleValidationErrors(w, err)
+	// validate user inputs
+	validator := validator.New()
+	if err := validator.Validate(req); err != nil {
+		res.JSON(w, http.StatusBadRequest, err)
 		return
 	}
 
