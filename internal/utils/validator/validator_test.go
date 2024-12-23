@@ -6,7 +6,7 @@ import (
 
 func TestValidateRequiredField(t *testing.T) {
 	type TestStruct struct {
-		Name string `validate:"required" json:"name"`
+		Name string `json:"name" validate:"required"`
 	}
 
 	v := New()
@@ -24,7 +24,7 @@ func TestValidateRequiredField(t *testing.T) {
 
 func TestValidateEmailField(t *testing.T) {
 	type TestStruct struct {
-		Email string `validate:"email" json:"email"`
+		Email string `json:"email" validate:"email"`
 	}
 
 	v := New()
@@ -42,7 +42,7 @@ func TestValidateEmailField(t *testing.T) {
 
 func TestValidateMinLengthField(t *testing.T) {
 	type TestStruct struct {
-		Username string `validate:"min=5" json:"username"`
+		Username string `json:"username" validate:"min=5"`
 	}
 
 	v := New()
@@ -60,9 +60,9 @@ func TestValidateMinLengthField(t *testing.T) {
 
 func TestValidateValidInput(t *testing.T) {
 	type TestStruct struct {
-		Name     string `validate:"required" json:"name"`
-		Email    string `validate:"email" json:"email"`
-		Username string `validate:"min=5" json:"username"`
+		Name     string `json:"name" validate:"required"`
+		Email    string `json:"email" validate:"email"`
+		Username string `json:"username" validate:"min=5"`
 	}
 
 	v := New()

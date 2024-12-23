@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -20,22 +21,13 @@ func New() *validator {
 func (v *validator) Validate(input interface{}) map[string]interface{} {
 	t := reflect.TypeOf(input)
 	val := reflect.ValueOf(input)
-	if t.Kind() != reflect.Struct {
-		return map[string]interface{}{
-			"error": "Input must be a struct",
-		}
-	}
 
 	errors := make(map[string]string)
+	// var errMsg string
 
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		fieldValue := val.Field(i)
-
-		// Check if the field is a string.
-		if fieldValue.Kind() != reflect.String {
-			continue
-		}
 
 		validateTag := field.Tag.Get("validate")
 		jsonTag := field.Tag.Get("json")
@@ -46,8 +38,7 @@ func (v *validator) Validate(input interface{}) map[string]interface{} {
 		}
 
 		rules := strings.Split(validateTag, ",")
-		err := validateField(rules, fieldValue.String(), errField)
-		if err != "" {
+		if err := validateField(rules, fieldValue.String(), errField); err != "" {
 			errors[errField] = err
 		}
 	}
@@ -71,22 +62,29 @@ func getErrorFieldName(field reflect.StructField, jsonTag string) string {
 
 // validateField performs validation based on rules and returns an error message if validation fails.
 func validateField(rules []string, value string, field string) string {
-	for _, rule := range rules {
-		switch {
-		case rule == "required":
-			if strings.TrimSpace(value) == "" {
-				return "This field is required."
-			}
-		case rule == "email":
-			if !isValidEmail(value) {
-				return "Enter a valid email."
-			}
-		case strings.HasPrefix(rule, "min="):
-			if err := validateMinLength(rule, value, field); err != "" {
-				return err
-			}
+
+	// validate required field
+	if slices.Contains(rules, "required") && value == "" {
+		return "This field is required."
+	}
+
+	// validate email field
+	if slices.Contains(rules, "email") && !isValidEmail(value) {
+		return "Enter a valid email."
+	}
+
+	// validate min value field
+	if index := slices.IndexFunc(rules, func(rule string) bool {
+		return strings.HasPrefix(rule, "min=")
+	}); index != -1 {
+		if err := validateMinLength(rules[index], value, field); err != "" {
+			return err
 		}
 	}
+
+	// add new rules here
+	// ###
+
 	return ""
 }
 
