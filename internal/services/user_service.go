@@ -13,11 +13,11 @@ type userService struct {
 
 type UserService interface {
 	CreateUser(ctx context.Context, user *models.User) (int64, error)
-	GetUserById(ctx context.Context, id int64) (*models.User, error)
+	FindUserById(ctx context.Context, id int64) (*models.User, error)
 	UpdateUser(ctx context.Context, user *models.User) error
 	DeleteUser(ctx context.Context, id int64) error
 	ExistUserByEmail(ctx context.Context, email string) (bool, error)
-	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+	FindUserByEmail(ctx context.Context, email string) (*models.User, error)
 }
 
 func NewUserService(repository repositories.UserRepository) UserService {
@@ -26,30 +26,30 @@ func NewUserService(repository repositories.UserRepository) UserService {
 
 // create a new user
 func (s *userService) CreateUser(ctx context.Context, user *models.User) (int64, error) {
-	return s.repository.CreateUser(ctx, user)
+	return s.repository.Create(ctx, user)
 }
 
-// get user by id
-func (s *userService) GetUserById(ctx context.Context, id int64) (*models.User, error) {
-	return s.repository.GetUserById(ctx, id)
+// find user by id
+func (s *userService) FindUserById(ctx context.Context, id int64) (*models.User, error) {
+	return s.repository.FindById(ctx, id)
 }
 
 // update a user
 func (s *userService) UpdateUser(ctx context.Context, user *models.User) error {
-	return s.repository.UpdateUser(ctx, user)
+	return s.repository.Update(ctx, user)
 }
 
 // delete a user
 func (s *userService) DeleteUser(ctx context.Context, id int64) error {
-	return s.repository.DeleteUser(ctx, id)
+	return s.repository.Delete(ctx, id)
 }
 
 // exist user by email
 func (s *userService) ExistUserByEmail(ctx context.Context, email string) (bool, error) {
-	return s.repository.ExistUserByEmail(ctx, email)
+	return s.repository.ExistsByEmail(ctx, email)
 }
 
-// get user by email
-func (s *userService) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
-	return s.repository.GetUserByEmail(ctx, email)
+// find user by email
+func (s *userService) FindUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	return s.repository.FindByEmail(ctx, email)
 }
