@@ -6,7 +6,6 @@ import (
 
 	"github.com/achintha-dilshan/go-rest-api/internal/models"
 	"github.com/achintha-dilshan/go-rest-api/internal/services"
-	"github.com/achintha-dilshan/go-rest-api/internal/utils/res"
 	"github.com/achintha-dilshan/go-rest-api/internal/utils/validator"
 	"github.com/go-chi/render"
 	"golang.org/x/crypto/bcrypt"
@@ -47,7 +46,6 @@ func (h *authHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	// validate user inputs
 	validator := validator.New()
 	if err := validator.Validate(req); err != nil {
-		res.JSON(w, http.StatusBadRequest, err)
 		render.Status(r, http.StatusBadRequest)
 		render.JSON(w, r, err)
 		return
