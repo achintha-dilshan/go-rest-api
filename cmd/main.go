@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/achintha-dilshan/go-rest-api/cmd/api"
-	"github.com/achintha-dilshan/go-rest-api/config"
 	"github.com/achintha-dilshan/go-rest-api/database"
 )
 
@@ -23,8 +22,7 @@ func main() {
 	}
 
 	// init server
-	port := ":" + config.Env.ServerPort
-	server := api.NewAPIServer(port, sqlDB)
+	server := api.NewAPIServer(sqlDB)
 
 	if err := server.Run(); err != nil {
 		log.Fatalf("Failed to start the server: %v", err)

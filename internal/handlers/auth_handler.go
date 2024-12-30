@@ -8,6 +8,7 @@ import (
 	"github.com/achintha-dilshan/go-rest-api/internal/services"
 	"github.com/achintha-dilshan/go-rest-api/internal/utils/res"
 	"github.com/achintha-dilshan/go-rest-api/internal/utils/validator"
+	"github.com/go-chi/render"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -36,7 +37,8 @@ func (h *authHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	// decode request body
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.JSON(w, http.StatusBadRequest, map[string]string{
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, map[string]string{
 			"error": "Invalid JSON payload.",
 		})
 		return
@@ -46,20 +48,24 @@ func (h *authHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	validator := validator.New()
 	if err := validator.Validate(req); err != nil {
 		res.JSON(w, http.StatusBadRequest, err)
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, err)
 		return
 	}
 
 	// check if the email is already exist
 	exists, err := h.service.ExistUserByEmail(r.Context(), req.Email)
 	if err != nil {
-		res.JSON(w, http.StatusInternalServerError, map[string]string{
+		render.Status(r, http.StatusInternalServerError)
+		render.JSON(w, r, map[string]string{
 			"error": "Internal server error.",
 		})
 		return
 	}
 
 	if exists {
-		res.JSON(w, http.StatusConflict, map[string]interface{}{
+		render.Status(r, http.StatusConflict)
+		render.JSON(w, r, map[string]interface{}{
 			"error": map[string]interface{}{
 				"email": "Email already exist.",
 			},
@@ -70,7 +76,8 @@ func (h *authHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	// hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		res.JSON(w, http.StatusInternalServerError, map[string]string{
+		render.Status(r, http.StatusInternalServerError)
+		render.JSON(w, r, map[string]string{
 			"error": "Internal server error.",
 		})
 		return
@@ -85,19 +92,22 @@ func (h *authHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 	userId, err := h.service.CreateUser(r.Context(), &newUser)
 	if err != nil {
-		res.JSON(w, http.StatusInternalServerError, map[string]string{
+		render.Status(r, http.StatusInternalServerError)
+		render.JSON(w, r, map[string]string{
 			"error": "Internal server error.",
 		})
 		return
 	}
 
 	// send success response
-	res.JSON(w, http.StatusCreated, map[string]interface{}{
+	render.Status(r, http.StatusCreated)
+	render.JSON(w, r, map[string]interface{}{
 		"id":      userId,
 		"name":    req.Name,
 		"email":   req.Email,
 		"message": "User registered successfully.",
 	})
+
 }
 
 // login user
@@ -109,7 +119,8 @@ func (h *authHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	// decode request body
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		res.JSON(w, http.StatusBadRequest, map[string]string{
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, map[string]string{
 			"error": "Invalid JSON payload.",
 		})
 		return
@@ -118,21 +129,24 @@ func (h *authHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	// validate user inputs
 	validator := validator.New()
 	if err := validator.Validate(req); err != nil {
-		res.JSON(w, http.StatusBadRequest, err)
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, err)
 		return
 	}
 
 	// retrieve user by email
 	user, err := h.service.FindUserByEmail(r.Context(), req.Email)
 	if err != nil {
-		res.JSON(w, http.StatusInternalServerError, map[string]string{
+		render.Status(r, http.StatusInternalServerError)
+		render.JSON(w, r, map[string]string{
 			"error": "Internal server error.",
 		})
 		return
 	}
 
 	if user == nil {
-		res.JSON(w, http.StatusInternalServerError, map[string]string{
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, map[string]string{
 			"error": "Email or password is incorrect.",
 		})
 		return
@@ -140,7 +154,8 @@ func (h *authHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	// compare passwords
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		res.JSON(w, http.StatusInternalServerError, map[string]string{
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, map[string]string{
 			"error": "Email or password is incorrect.",
 		})
 		return
@@ -150,7 +165,8 @@ func (h *authHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	token := "mocked_token"
 
 	// send success response
-	res.JSON(w, http.StatusOK, map[string]interface{}{
+	render.Status(r, http.StatusBadGateway)
+	render.JSON(w, r, map[string]interface{}{
 		"token":   token,
 		"message": "Login successful.",
 	})

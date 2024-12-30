@@ -6,6 +6,7 @@ import (
 	"github.com/achintha-dilshan/go-rest-api/internal/routes"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 )
 
 type router struct {
@@ -25,6 +26,8 @@ func NewRouter(db *sql.DB) Router {
 func (r *router) Init() *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(render.SetContentType(render.ContentTypeJSON))
 
 	// Auth Routes
 	router.Mount("/auth", routes.NewAuthRoutes(r.db).Get())

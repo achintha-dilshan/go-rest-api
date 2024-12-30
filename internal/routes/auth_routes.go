@@ -24,12 +24,12 @@ func NewAuthRoutes(db *sql.DB) AuthRoutes {
 func (r *authRoutes) Get() *chi.Mux {
 	router := chi.NewRouter()
 
-	authRepository := repositories.NewUserRepository(r.db)
-	authService := services.NewUserService(authRepository)
-	authHandler := handlers.NewAuthHandler(authService)
+	repo := repositories.NewUserRepository(r.db)
+	service := services.NewUserService(repo)
+	handler := handlers.NewAuthHandler(service)
 
-	router.Post("/login", authHandler.LoginUser)
-	router.Post("/register", authHandler.RegisterUser)
+	router.Post("/login", handler.LoginUser)
+	router.Post("/register", handler.RegisterUser)
 
 	return router
 }

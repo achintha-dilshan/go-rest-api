@@ -9,7 +9,10 @@ require (
 	github.com/joho/godotenv v1.5.1
 )
 
+require github.com/ajg/form v1.5.1 // indirect
+
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/go-chi/render v1.0.3
 	golang.org/x/crypto v0.27.0
 )

@@ -4,33 +4,33 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+
+	"github.com/achintha-dilshan/go-rest-api/config"
 )
 
 type apiServer struct {
-	addr string
-	db   *sql.DB
+	db *sql.DB
 }
 
 type APIServer interface {
 	Run() error
 }
 
-func NewAPIServer(addr string, db *sql.DB) APIServer {
+func NewAPIServer(db *sql.DB) APIServer {
 	return &apiServer{
-		addr: addr,
-		db:   db,
+		db: db,
 	}
 }
 
 func (s *apiServer) Run() error {
-	router := NewRouter(s.db)
+	port := ":" + config.Env.ServerPort
 
 	server := &http.Server{
-		Addr:    s.addr,
-		Handler: router.Init(),
+		Addr:    port,
+		Handler: NewRouter(s.db).Init(),
 	}
 
-	log.Printf("Server is running on port %v", s.addr)
+	log.Printf("Server is running on port %v", port)
 
 	return server.ListenAndServe()
 }
