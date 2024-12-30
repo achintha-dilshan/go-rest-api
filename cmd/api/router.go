@@ -32,5 +32,8 @@ func (r *router) Init() *chi.Mux {
 	// Auth Routes
 	router.Mount("/auth", routes.NewAuthRoutes(r.db).Get())
 
+	// Post Routes
+	router.Mount("/posts", routes.NewPostRoutes(r.db).Get())
+
 	return router
 }
