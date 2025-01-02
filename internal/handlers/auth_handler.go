@@ -6,6 +6,7 @@ import (
 
 	"github.com/achintha-dilshan/go-rest-api/internal/models"
 	"github.com/achintha-dilshan/go-rest-api/internal/services"
+	"github.com/achintha-dilshan/go-rest-api/internal/utils/jwt"
 	"github.com/achintha-dilshan/go-rest-api/internal/utils/validator"
 	"github.com/go-chi/render"
 	"golang.org/x/crypto/bcrypt"
@@ -159,13 +160,20 @@ func (h *authHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: generate a token
-	token := "mocked_token"
+	// generate token
+	token, err := jwt.GenerateToken(user.Id)
+	if err != nil {
+		render.Status(r, http.StatusInternalServerError)
+		render.JSON(w, r, map[string]string{
+			"error": "Internal server error.",
+		})
+		return
+	}
 
 	// send success response
 	render.Status(r, http.StatusBadGateway)
 	render.JSON(w, r, map[string]interface{}{
 		"token":   token,
-		"message": "Login successful.",
+		"message": "Login was successful.",
 	})
 }

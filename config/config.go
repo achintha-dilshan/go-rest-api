@@ -20,8 +20,7 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 
-	AccessTokenKey  string
-	RefreshTokenKey string
+	JWTSecret string
 }
 
 // Init initializes the configuration by reading from environment variables.
@@ -32,17 +31,16 @@ func Init() *Config {
 	}
 
 	return &Config{
-		AppEnv:          os.Getenv("APP_ENV"),
-		ServerHost:      os.Getenv("SERVER_HOST"),
-		ServerPort:      os.Getenv("SERVER_PORT"),
-		DBDriver:        os.Getenv("DB_DRIVER"),
-		DBHost:          os.Getenv("DB_HOST"),
-		DBPort:          os.Getenv("DB_PORT"),
-		DBName:          os.Getenv("DB_NAME"),
-		DBUser:          os.Getenv("DB_USER"),
-		DBPassword:      os.Getenv("DB_PASSWORD"),
-		AccessTokenKey:  os.Getenv("ACCESS_TOKEN_KEY"),
-		RefreshTokenKey: os.Getenv("REFRESH_TOKEN_KEY"),
+		AppEnv:     os.Getenv("APP_ENV"),
+		ServerHost: os.Getenv("SERVER_HOST"),
+		ServerPort: os.Getenv("SERVER_PORT"),
+		DBDriver:   os.Getenv("DB_DRIVER"),
+		DBHost:     os.Getenv("DB_HOST"),
+		DBPort:     os.Getenv("DB_PORT"),
+		DBName:     os.Getenv("DB_NAME"),
+		DBUser:     os.Getenv("DB_USER"),
+		DBPassword: os.Getenv("DB_PASSWORD"),
+		JWTSecret:  os.Getenv("JWT_SECRET"),
 	}
 }
 
