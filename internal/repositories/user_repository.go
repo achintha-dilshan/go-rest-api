@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/achintha-dilshan/go-rest-api/internal/models"
 )
@@ -40,9 +41,9 @@ func (r *userRepository) Create(ctx context.Context, user *models.User) (int64, 
 // retrieves a user by ID
 func (r *userRepository) FindById(ctx context.Context, id int64) (*models.User, error) {
 	var user models.User
-	query := "SELECT id, name, email FROM users WHERE id = ?"
+	query := "SELECT id, name, email, password FROM users WHERE id = ?"
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&user.Id, &user.Name, &user.Email,
+		&user.Id, &user.Name, &user.Email, &user.Password,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -54,8 +55,10 @@ func (r *userRepository) FindById(ctx context.Context, id int64) (*models.User, 
 
 // updates a user's details in the database
 func (r *userRepository) Update(ctx context.Context, user *models.User) error {
-	query := "UPDATE users SET name = ?, email = ? WHERE id = ?"
-	_, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Id)
+	query := "UPDATE users SET name = ?, email = ?, password = ?, updated_at = NOW() WHERE id = ?"
+	re, err := r.db.ExecContext(ctx, query, user.Name, user.Email, user.Password, user.Id)
+
+	fmt.Println(re.LastInsertId())
 
 	return err
 }

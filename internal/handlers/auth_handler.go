@@ -102,8 +102,8 @@ func (h *authHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, map[string]interface{}{
 		"id":      userId,
-		"name":    req.Name,
-		"email":   req.Email,
+		"name":    newUser.Name,
+		"email":   newUser.Email,
 		"message": "User registered successfully.",
 	})
 
@@ -171,7 +171,7 @@ func (h *authHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send success response
-	render.Status(r, http.StatusBadGateway)
+	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]interface{}{
 		"token":   token,
 		"message": "Login was successful.",

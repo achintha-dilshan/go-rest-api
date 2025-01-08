@@ -6,13 +6,10 @@ import (
 	"strings"
 
 	"github.com/achintha-dilshan/go-rest-api/config"
+	"github.com/achintha-dilshan/go-rest-api/internal/types"
 	"github.com/go-chi/render"
 	"github.com/golang-jwt/jwt/v5"
 )
-
-type contextKey string
-
-const UserIDKey contextKey = "userID"
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +58,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		userID, ok := claims["userID"].(float64) // JWT encodes numbers as float64
+		userID, ok := claims["id"].(float64) // JWT encodes numbers as float64
 		if !ok {
 			render.Status(r, http.StatusUnauthorized)
 			render.JSON(w, r, map[string]string{
@@ -71,7 +68,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Add user ID to the context
-		ctx := context.WithValue(r.Context(), UserIDKey, int(userID))
+		ctx := context.WithValue(r.Context(), types.UserIDKey, int(userID))
 
 		// Pass to the next handler
 		next.ServeHTTP(w, r.WithContext(ctx))
