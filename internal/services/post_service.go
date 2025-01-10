@@ -13,6 +13,7 @@ type postService struct {
 
 type PostService interface {
 	CreatePost(ctx context.Context, post *models.Post) (int64, error)
+	FindAll(ctx context.Context) ([]*models.Post, error)
 	FindPostById(ctx context.Context, id int64) (*models.Post, error)
 	UpdatePost(ctx context.Context, post *models.Post) error
 	DeletePost(ctx context.Context, id int64) error
@@ -27,6 +28,11 @@ func NewPostService(repository repositories.PostRepository) PostService {
 // create a new post
 func (s *postService) CreatePost(ctx context.Context, post *models.Post) (int64, error) {
 	return s.repository.Create(ctx, post)
+}
+
+// find all posts
+func (s *postService) FindAll(ctx context.Context) ([]*models.Post, error) {
+	return s.repository.FindAll(ctx)
 }
 
 // find post by id
