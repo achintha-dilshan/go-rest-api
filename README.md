@@ -1,4 +1,4 @@
-# Simple REST API
+# GO REST API
 
 This is a simple REST API built using GoLang, featuring the [Chi Router](https://github.com/go-chi/chi) for routing, [Goose](https://github.com/pressly/goose) for database migrations, and MySQL as the database. The API implements JWT-based authentication for secure access to protected endpoints.
 
