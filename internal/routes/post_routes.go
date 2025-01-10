@@ -3,6 +3,10 @@ package routes
 import (
 	"database/sql"
 
+	"github.com/achintha-dilshan/go-rest-api/internal/handlers"
+	"github.com/achintha-dilshan/go-rest-api/internal/middlewares"
+	"github.com/achintha-dilshan/go-rest-api/internal/repositories"
+	"github.com/achintha-dilshan/go-rest-api/internal/services"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -23,11 +27,15 @@ func NewPostRoutes(db *sql.DB) PostRoutes {
 func (r *postRoutes) Get() *chi.Mux {
 	router := chi.NewRouter()
 
-	router.Get("/", nil)
-	router.Post("/", nil)
-	router.Get("/{id}", nil)
-	router.Post("/{id}/edit", nil)
-	router.Post("/{id}/delete", nil)
+	repo := repositories.NewPostRepository(r.db)
+	service := services.NewPostService(repo)
+	handler := handlers.NewPostHandler(service)
+
+	router.Get("/", handler.GetAllPosts)
+	router.Get("/{id}", handler.GetSinglePost)
+	router.With(middlewares.AuthMiddleware).Post("/", handler.CreatePost)
+	router.With(middlewares.AuthMiddleware).Patch("/{id}", handler.EditPost)
+	router.With(middlewares.AuthMiddleware).Delete("/{id}", handler.DeletePost)
 
 	return router
 }
