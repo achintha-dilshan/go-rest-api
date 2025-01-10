@@ -231,6 +231,6 @@ func (h *userHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	// send success response
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]interface{}{
-		"message": "Deleted user successfully.",
+		"message": "User deleted successfully.",
 	})
 }
