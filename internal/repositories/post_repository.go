@@ -14,6 +14,7 @@ type postRepository struct {
 
 type PostRepository interface {
 	Create(ctx context.Context, post *models.Post) (int64, error)
+	FindAll(ctx context.Context) ([]*models.Post, error)
 	FindById(ctx context.Context, id int64) (*models.Post, error)
 	Update(ctx context.Context, post *models.Post) error
 	Delete(ctx context.Context, id int64) error
@@ -27,8 +28,8 @@ func NewPostRepository(db *sql.DB) PostRepository {
 
 // inserts a new post into the database
 func (r *postRepository) Create(ctx context.Context, post *models.Post) (int64, error) {
-	query := "INSERT INTO posts (title, body) VALUES (?, ?)"
-	result, err := r.db.ExecContext(ctx, query, post.Title, post.Body)
+	query := "INSERT INTO posts (author_id, title, body) VALUES (?, ?, ?)"
+	result, err := r.db.ExecContext(ctx, query, post.AuthorId, post.Title, post.Body)
 
 	if err != nil {
 		return 0, err
@@ -37,12 +38,39 @@ func (r *postRepository) Create(ctx context.Context, post *models.Post) (int64, 
 	return result.LastInsertId()
 }
 
+// retrieve all posts
+func (r *postRepository) FindAll(ctx context.Context) ([]*models.Post, error) {
+	var posts []*models.Post
+	query := "SELECT id, author_id, title, body FROM posts"
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var post models.Post
+		if err := rows.Scan(&post.Id, &post.AuthorId, &post.Title, &post.Body); err != nil {
+			return nil, err
+		}
+
+		posts = append(posts, &post)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
 // retrieves a post by ID
 func (r *postRepository) FindById(ctx context.Context, id int64) (*models.Post, error) {
 	var post models.Post
-	query := "SELECT id, title, body FROM posts WHERE id = ?"
+	query := "SELECT id, author_id, title, body FROM posts WHERE id = ?"
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&post.Id, &post.Title, &post.Body,
+		&post.Id, &post.AuthorId, &post.Title, &post.Body,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
